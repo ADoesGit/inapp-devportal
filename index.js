@@ -6,7 +6,9 @@
 const { React, getModule, getModuleByDisplayName, constants: { MarketingURLs: { DEVELOPER_PORTAL } } } = require('powercord/webpack');
 const { Plugin } = require('powercord/entities');
 const { inject, uninject } = require('powercord/injector');
-
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 module.exports = class InAppDevPortal extends Plugin {
   startPlugin () {
     this._injectDevPortal();
@@ -28,18 +30,21 @@ module.exports = class InAppDevPortal extends Plugin {
       usage: '{c}',
       executor: async () => {
         require('powercord/webpack').getModule([ 'transitionTo' ], false).transitionTo('/_powercord/inapp-devportal');
-        const doc = document.querySelector('.inappdevportal').contentDocument;
-        Array.prototype.forEach.call(document.querySelectorAll('link[rel=stylesheet]'), (link) => {
-          const newLink = document.createElement('link');
-          newLink.rel = link.rel;
-          newLink.href = link.href;
-          doc.head.appendChild(newLink);
-        });
-        Array.prototype.forEach.call(document.querySelectorAll('style'), (link) => {
-          const newLink = document.createElement('style');
-          newLink.innerHTML = link.innerHTML;
-          doc.head.appendChild(newLink);
-        });
+        const frame = document.querySelector('.inappdevportal');
+        await sleep(1000)
+        //frame.src = DEVELOPER_PORTAL
+        const doc = frame.contentDocument
+          Array.prototype.forEach.call(document.querySelectorAll('link[rel=stylesheet]'), (link) => {
+            const newLink = document.createElement('link');
+            newLink.rel = link.rel;
+            newLink.href = link.href;
+            doc.head.appendChild(newLink);
+          });
+          Array.prototype.forEach.call(document.querySelectorAll('style'), (link) => {
+            const newLink = document.createElement('style');
+            newLink.innerHTML = link.innerHTML;
+            doc.head.appendChild(newLink);
+          });
       }
     });
   }
@@ -54,10 +59,10 @@ module.exports = class InAppDevPortal extends Plugin {
     const PrivateChannel = await getModule([ 'LinkButton' ]);
     // const PrivateChannelsList = await getModuleByDisplayName('ConnectedPrivateChannelsList');
     const PrivateChannelsList = await getModule(m => m.default && m.default.displayName === 'ConnectedPrivateChannelsList');
-    console.log(PrivateChannel, PrivateChannelsList);
+    /console.log(PrivateChannel, PrivateChannelsList);
     inject('devportal-item', PrivateChannelsList, 'default', (_, res) => {
       const selected = window.location.pathname === '/_powercord/inapp-devportal';
-      console.log(res);
+      //console.log(res);
       const index = res.props.children.map(c => c && c.type && c.type.displayName && c.type.displayName.includes('FriendsButtonInner')).indexOf(true) + 1;
       if (selected) {
         res.props.children.forEach(c => {
